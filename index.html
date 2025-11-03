@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TrendCart — Online Product Store</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+</head>
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+
+  <!-- STICKY NAVBAR -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md dark:bg-gray-800/90 border-b border-gray-200 dark:border-gray-700">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-4">
+          <a href="#home" class="font-bold text-xl">TrendCart</a>
+          <nav class="hidden md:flex items-center gap-2" id="main-nav">
+            <a href="#home" class="nav-link px-3 py-2 rounded-md" data-target="home">Home</a>
+            <a href="#products" class="nav-link px-3 py-2 rounded-md" data-target="products">Products</a>
+            <a href="#reviews" class="nav-link px-3 py-2 rounded-md" data-target="reviews">Reviews</a>
+            <a href="#contact" class="nav-link px-3 py-2 rounded-md" data-target="contact">Contact</a>
+          </nav>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Balance & Add Money -->
+          <div class="hidden sm:flex items-center gap-2">
+            <div class="text-sm">Balance: <span id="balanceDisplay" class="font-semibold">0 BDT</span></div>
+            <button id="addMoneyBtn" class="px-3 py-1 bg-green-500 text-white rounded-md text-sm">+1000</button>
+          </div>
+
+          <!-- Cart button -->
+          <div class="relative">
+            <button id="cartBtn" class="px-3 py-2 bg-blue-600 text-white rounded-md">Cart (<span id="cartCount">0</span>)</button>
+            <div id="cartPanel" class="hidden absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-4">
+              <h3 class="font-semibold">Shopping Cart</h3>
+              <div id="cartItems" class="mt-3 space-y-2 max-h-60 overflow-auto"></div>
+              <div class="mt-3 border-t pt-3 space-y-1 text-sm">
+                <div>Subtotal: <span id="subtotal">0</span> BDT</div>
+                <div>Delivery: <span id="deliveryCharge">50</span> BDT</div>
+                <div>Shipping: <span id="shippingCost">30</span> BDT</div>
+                <div>Discount: <span id="discount">0</span> BDT</div>
+                <div class="font-semibold">Total: <span id="totalPrice">0</span> BDT</div>
+                <div id="balanceWarning" class="text-red-500 text-sm hidden">Total exceeds available balance!</div>
+              </div>
+              <div class="mt-3 flex gap-2">
+                <input id="couponInput" placeholder="Coupon code" class="flex-1 px-2 py-1 border rounded-md text-sm" />
+                <button id="applyCoupon" class="px-3 py-1 bg-yellow-500 text-white rounded-md text-sm">Apply</button>
+              </div>
+              <div class="mt-3 flex gap-2">
+                <button id="checkoutBtn" class="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-md">Checkout</button>
+                <button id="clearCartBtn" class="px-3 py-2 bg-red-500 text-white rounded-md">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile menu toggle -->
+          <button id="mobileToggle" class="md:hidden px-2 py-2 rounded-md bg-gray-200 dark:bg-gray-700">Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Nav -->
+    <div id="mobileNav" class="hidden md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div class="px-4 py-3 space-y-2">
+        <a href="#home" class="block nav-link" data-target="home">Home</a>
+        <a href="#products" class="block nav-link" data-target="products">Products</a>
+        <a href="#reviews" class="block nav-link" data-target="reviews">Reviews</a>
+        <a href="#contact" class="block nav-link" data-target="contact">Contact</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+    <!-- HERO / SLIDING BANNER -->
+    <section id="home" class="space-y-4">
+      <div class="relative rounded-lg overflow-hidden">
+        <div id="bannerSlides" class="relative h-56 sm:h-80">
+          <!-- slides injected by JS -->
+        </div>
+        <button id="prevSlide" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-700/80 p-2 rounded-full">‹</button>
+        <button id="nextSlide" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-700/80 p-2 rounded-full">›</button>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <input id="searchInput" type="text" placeholder="Search products..." class="px-3 py-2 border rounded-md" />
+          <select id="sortSelect" class="px-3 py-2 border rounded-md">
+            <option value="">Sort</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating-desc">Rating: High to Low</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="flex items-center gap-2 text-sm">Dark Mode
+            <input id="darkToggle" type="checkbox" class="accent-indigo-600" />
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS SECTION -->
+    <section id="products" class="space-y-4">
+      <h2 class="text-2xl font-semibold">Products</h2>
+      <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- cards injected by JS -->
+      </div>
+    </section>
+
+    <!-- REVIEWS SECTION -->
+    <section id="reviews" class="space-y-4">
+      <h2 class="text-2xl font-semibold">Customer Reviews</h2>
+      <div class="relative bg-white dark:bg-gray-800 rounded-md p-4">
+        <div id="reviewCarousel" class="min-h-[120px]">
+          <!-- review slides injected by JS -->
+        </div>
+        <div class="mt-3 flex justify-between">
+          <button id="prevReview" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md">Prev</button>
+          <button id="nextReview" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT (Bonus Feature) -->
+    <section id="contact" class="space-y-4">
+      <h2 class="text-2xl font-semibold">Contact Us</h2>
+      <form id="contactForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-gray-800 p-4 rounded-md">
+        <input id="contactName" placeholder="Your name" class="px-3 py-2 border rounded-md" required />
+        <input id="contactEmail" placeholder="Your email" type="email" class="px-3 py-2 border rounded-md" required />
+        <textarea id="contactMessage" placeholder="Message" class="col-span-1 sm:col-span-2 px-3 py-2 border rounded-md" required></textarea>
+        <button type="submit" class="col-span-1 sm:col-span-2 px-4 py-2 bg-indigo-600 text-white rounded-md">Send Message</button>
+      </form>
+    </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
+      <div>
+        <div class="font-semibold">TrendCart</div>
+        <div class="text-sm">Contact: +8801531702853</div>
+        <div class="text-xs mt-1">© <span id="year"></span> TrendCart. All rights reserved.</div>
+      </div>
+      <div class="flex gap-3 items-center">
+        <a href="#home" class="text-sm">Home</a>
+        <a href="#products" class="text-sm">Products</a>
+        <a href="#contact" class="text-sm">Contact</a>
+        <button id="backToTop" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md text-sm">Back to Top</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MAIN JAVASCRIPT (All DOM work) -->
+  <script>
+    const API_URL = 'https://fakestoreapi.com/products';
+    const STARTING_BALANCE = 1000; // BDT
+    const DELIVERY_CHARGE = 50;
+    const SHIPPING_COST = 30;
+
+    const state = {
+      products: [],
+      cart: [], // {id, qty}
+      balance: 0,
+      coupon: null,
+      reviews: []
+    };
+
+    // Utility Functions
+    function $(sel) { return document.querySelector(sel); }
+    function $all(sel) { return Array.from(document.querySelectorAll(sel)); }
+
+    // Initialization
+    document.addEventListener('DOMContentLoaded', async () => {
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // Load balance from localStorage
+      const saved = localStorage.getItem('smartshop_balance');
+      state.balance = saved ? Number(saved) : STARTING_BALANCE;
+      updateBalanceDisplay();
+
+      // setup handlers
+      setupNavbar();
+      setupCartUI();
+      await loadProducts();
+      setupSearchSort();
+      setupBanner();
+      loadReviews();
+      setupReviewsCarousel();
+      setupContactForm();
+      setupDarkMode();
+    });
+
+    // NAVBAR
+    function setupNavbar(){
+      // highlight active
+      function setActive(target){
+        $all('.nav-link').forEach(a => a.classList.toggle('bg-indigo-100/60', a.dataset.target===target));
+      }
+      $all('.nav-link').forEach(a=>{
+        a.addEventListener('click', (e)=>{ setActive(a.dataset.target); document.getElementById('mobileNav')?.classList.add('hidden'); });
+      });
+
+      // mobile toggle
+      $('#mobileToggle').addEventListener('click', ()=>{ $('#mobileNav').classList.toggle('hidden'); });
+
+      // back-to-top
+      $('#backToTop').addEventListener('click', ()=>window.scrollTo({top:0,behavior:'smooth'}));
+    }
+
+    // BALANCE & MONEY
+    function updateBalanceDisplay(){
+      $('#balanceDisplay').textContent = state.balance + ' BDT';
+      localStorage.setItem('smartshop_balance', state.balance);
+      checkBalanceAgainstCart();
+    }
+    $('#addMoneyBtn').addEventListener('click', ()=>{ state.balance += STARTING_BALANCE; updateBalanceDisplay(); });
+
+    // LOAD PRODUCTS
+    async function loadProducts(){
+      try{
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        state.products = data;
+        renderProducts(data);
+      }catch(err){
+        console.error('Failed to fetch products, using fallback sample', err);
+        state.products = [];
+        renderProducts([]);
+      }
+    }
+
+    // RENDER PRODUCTS
+    function renderProducts(products){
+      const grid = $('#productGrid');
+      grid.innerHTML = '';
+      products.forEach(p=>{
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm flex flex-col';
+        card.innerHTML = `
+          <img src="${p.image}" alt="${escapeHtml(p.title)}" class="w-full h-48 object-contain mb-3" />
+          <h3 class="font-semibold text-sm mb-1">${escapeHtml(p.title)}</h3>
+          <div class="text-sm mb-2">Price: <span class="font-semibold">${Math.round(p.price)}</span> BDT</div>
+          <div class="text-xs text-yellow-500 mb-3">Rating: ${p.rating?.rate ?? 'N/A'} (${p.rating?.count ?? 0})</div>
+          <div class="mt-auto flex gap-2">
+            <button class="addToCartBtn flex-1 px-3 py-2 bg-blue-600 text-white rounded-md" data-id="${p.id}">Add to Cart</button>
+            <button class="viewBtn px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-md">View</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      // attach add to cart handlers
+      $all('.addToCartBtn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{ addToCart(Number(btn.dataset.id)); });
+      });
+    }
+
+    function escapeHtml(text){ return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // CART SYSTEM
+    function setupCartUI(){
+      $('#cartBtn').addEventListener('click', ()=>{ $('#cartPanel').classList.toggle('hidden'); });
+      $('#clearCartBtn').addEventListener('click', ()=>{ state.cart = []; renderCart(); });
+      $('#applyCoupon').addEventListener('click', ()=>{ applyCoupon($('#couponInput').value.trim()); });
+      $('#checkoutBtn').addEventListener('click', ()=>{ checkout(); });
+    }
+
+    function addToCart(productId){
+      const product = state.products.find(p=>p.id===productId);
+      if(!product) return;
+
+      const existing = state.cart.find(item=>item.id===productId);
+      if(existing){ existing.qty += 1; }
+      else state.cart.push({id: productId, qty: 1});
+      renderCart();
+    }
+
+    function removeFromCart(productId){ state.cart = state.cart.filter(i=>i.id!==productId); renderCart(); }
+    function changeQty(productId, delta){
+      const item = state.cart.find(i=>i.id===productId); if(!item) return;
+      item.qty += delta; if(item.qty<=0) removeFromCart(productId); renderCart();
+    }
+
+    function calculateCart(){
+      let subtotal = 0;
+      state.cart.forEach(ci=>{
+        const p = state.products.find(x=>x.id===ci.id);
+        if(p) subtotal += Math.round(p.price) * ci.qty;
+      });
+      const delivery = state.cart.length ? DELIVERY_CHARGE : 0;
+      const shipping = state.cart.length ? SHIPPING_COST : 0;
+      let discount = 0;
+      if(state.coupon==='SMART10') discount = Math.round(subtotal * 0.10);
+      const total = subtotal + delivery + shipping - discount;
+      return {subtotal, delivery, shipping, discount, total};
+    }
+
+    function renderCart(){
+      const panelItems = $('#cartItems');
+      panelItems.innerHTML = '';
+      state.cart.forEach(ci=>{
+        const p = state.products.find(x=>x.id===ci.id);
+        if(!p) return;
+        const el = document.createElement('div');
+        el.className = 'flex items-center gap-2 border-b pb-2';
+        el.innerHTML = `
+          <img src="${p.image}" class="w-12 h-12 object-contain" />
+          <div class="flex-1 text-sm">
+            <div class="font-semibold">${escapeHtml(p.title)}</div>
+            <div>${Math.round(p.price)} BDT x ${ci.qty}</div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <button class="incBtn px-2 py-1 bg-gray-200 rounded text-sm" data-id="${p.id}">+</button>
+            <button class="decBtn px-2 py-1 bg-gray-200 rounded text-sm" data-id="${p.id}">-</button>
+            <button class="delBtn px-2 py-1 bg-red-500 text-white rounded text-sm" data-id="${p.id}">Del</button>
+          </div>
+        `;
+        panelItems.appendChild(el);
+      });
+
+      // attach handlers
+      $all('.incBtn').forEach(b=>b.addEventListener('click', ()=>changeQty(Number(b.dataset.id),1)));
+      $all('.decBtn').forEach(b=>b.addEventListener('click', ()=>changeQty(Number(b.dataset.id),-1)));
+      $all('.delBtn').forEach(b=>b.addEventListener('click', ()=>removeFromCart(Number(b.dataset.id))));
+
+      // counts & totals
+      $('#cartCount').textContent = state.cart.reduce((s,i)=>s+i.qty,0);
+      const calc = calculateCart();
+      $('#subtotal').textContent = calc.subtotal;
+      $('#deliveryCharge').textContent = calc.delivery;
+      $('#shippingCost').textContent = calc.shipping;
+      $('#discount').textContent = calc.discount;
+      $('#totalPrice').textContent = calc.total;
+
+      checkBalanceAgainstCart();
+    }
+
+    function applyCoupon(code){
+      if(!code) return alert('Enter coupon code');
+      if(code.toUpperCase()==='SMART10'){
+        state.coupon = 'SMART10';
+        alert('SMART10 applied: 10% off');
+      } else {
+        state.coupon = null; alert('Invalid coupon');
+      }
+      renderCart();
+    }
+
+    function checkBalanceAgainstCart(){
+      const {total} = calculateCart();
+      const warn = $('#balanceWarning');
+      if(total > state.balance){ warn.classList.remove('hidden'); } else warn.classList.add('hidden');
+    }
+
+    function checkout(){
+      const calc = calculateCart();
+      if(calc.total === 0) return alert('Cart is empty');
+      if(calc.total > state.balance) return alert('Not enough balance. Please add money.');
+      // simulate purchase
+      state.balance -= calc.total;
+      state.cart = [];
+      state.coupon = null;
+      $('#couponInput').value = '';
+      updateBalanceDisplay();
+      renderCart();
+      alert('Purchase successful!');
+    }
+
+    // SEARCH & SORT (extra feature)
+    function setupSearchSort(){
+      $('#searchInput').addEventListener('input', ()=>{ applyFilters(); });
+      $('#sortSelect').addEventListener('change', ()=>{ applyFilters(); });
+    }
+
+    function applyFilters(){
+      const q = $('#searchInput').value.trim().toLowerCase();
+      const sort = $('#sortSelect').value;
+      let results = state.products.filter(p=>p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+      if(sort==='price-asc') results.sort((a,b)=>a.price-b.price);
+      if(sort==='price-desc') results.sort((a,b)=>b.price-a.price);
+      if(sort==='rating-desc') results.sort((a,b)=>(b.rating?.rate||0)-(a.rating?.rate||0));
+      renderProducts(results);
+    }
+
+    // BANNER SLIDER
+    const banners = [
+      {img:'https://images.samsung.com/is/image/samsung/ca-c49hg90-lc49hg90dmnxza-black-69799355?$Q90_684_547_JPG$', title:'Big Sale!'},
+      {img:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1400&q=80&auto=format&fit=crop', title:'New Arrivals'},
+      {img:'https://m.media-amazon.com/images/I/61laOQmW8NL.jpg', title:'Limited Offers'},
+    ];
+    let bannerIndex = 0; let bannerTimer;
+    function setupBanner(){
+      renderBanner();
+      $('#prevSlide').addEventListener('click', ()=>{ bannerIndex = (bannerIndex-1 + banners.length)%banners.length; renderBanner(); resetBannerTimer(); });
+      $('#nextSlide').addEventListener('click', ()=>{ bannerIndex = (bannerIndex+1)%banners.length; renderBanner(); resetBannerTimer(); });
+      resetBannerTimer();
+    }
+    function renderBanner(){
+      const container = $('#bannerSlides');
+      container.innerHTML = '';
+      const b = banners[bannerIndex];
+      const el = document.createElement('div');
+      el.className = 'w-full h-full flex items-center justify-center bg-center bg-cover';
+      el.style.backgroundImage = `url(${b.img})`;
+      el.innerHTML = `<div class="bg-black/40 text-white p-4 rounded-md">${b.title}</div>`;
+      container.appendChild(el);
+    }
+    function resetBannerTimer(){
+      clearInterval(bannerTimer);
+      bannerTimer = setInterval(()=>{ bannerIndex = (bannerIndex+1)%banners.length; renderBanner(); }, 5000);
+    }
+
+    // REVIEWS (local JSON example)
+    function loadReviews(){
+      // Example local reviews - replace with fetch() if hosting a JSON file or using an API
+      state.reviews = [
+        {name:'Amina', comment:'Great products, fast delivery!', rating:5, date:'2025-10-25'},
+        {name:'Rafi', comment:'Good value for money.', rating:4, date:'2025-09-10'},
+        {name:'Maya', comment:'Customer support was helpful.', rating:5, date:'2025-08-02'},
+      ];
+      renderReview(0);
+    }
+
+    // simple carousel for reviews
+    let reviewIndex = 0; let reviewTimer;
+    function setupReviewsCarousel(){
+      $('#prevReview').addEventListener('click', ()=>{ reviewIndex = (reviewIndex-1 + state.reviews.length)%state.reviews.length; renderReview(reviewIndex); resetReviewTimer(); });
+      $('#nextReview').addEventListener('click', ()=>{ reviewIndex = (reviewIndex+1)%state.reviews.length; renderReview(reviewIndex); resetReviewTimer(); });
+      resetReviewTimer();
+    }
+    function renderReview(i){
+      if(state.reviews.length===0){ $('#reviewCarousel').innerHTML = '<div>No reviews yet.</div>'; return; }
+      const r = state.reviews[i];
+      $('#reviewCarousel').innerHTML = `
+        <div class="text-sm">
+          <div class="font-semibold">${escapeHtml(r.name)}</div>
+          <div class="text-xs text-yellow-400">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+          <div class="mt-2">${escapeHtml(r.comment)}</div>
+          <div class="text-xs mt-2 text-gray-500">${r.date}</div>
+        </div>
+      `;
+    }
+    function resetReviewTimer(){ clearInterval(reviewTimer); reviewTimer = setInterval(()=>{ reviewIndex = (reviewIndex+1)%state.reviews.length; renderReview(reviewIndex); }, 6000); }
+
+    // CONTACT FORM
+    function setupContactForm(){
+      $('#contactForm').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const name = $('#contactName').value.trim();
+        const email = $('#contactEmail').value.trim();
+        const msg = $('#contactMessage').value.trim();
+        if(!name || !email || !msg) return alert('Please fill all fields');
+        // basic email check
+        if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return alert('Enter a valid email');
+        // simulate submission
+        $('#contactForm').reset();
+        alert('Thanks for contacting us, ' + name + '!');
+      });
+    }
+
+    // DARK MODE
+    function setupDarkMode(){
+      const checkbox = $('#darkToggle');
+      // init from localStorage
+      const pref = localStorage.getItem('smartshop_dark');
+      if(pref === '1'){ document.documentElement.classList.add('dark'); checkbox.checked = true; }
+      checkbox.addEventListener('change', ()=>{
+        if(checkbox.checked){ document.documentElement.classList.add('dark'); localStorage.setItem('smartshop_dark','1'); }
+        else { document.documentElement.classList.remove('dark'); localStorage.setItem('smartshop_dark','0'); }
+      });
+    }
+
+  </script>
+</body>
+</html>
